@@ -12,6 +12,11 @@
 #define BLOCK_BITMAP_SIZE (MAX_BLOCKS / 8)
 #define INODE_BITMAP_SIZE (MAX_INODES / 8)
 
+#define SUPERBLOCK_NUMBER 0
+#define INODE_BITMAP_NUMBER 1
+#define BLOCK_BITMAP_NUMBER 2
+#define INODE_TABLE_NUMBER 3
+
 struct superblock {
     int s_inodes_count;          // Total number of inodes in the filesystem
     int s_blocks_count;          // Total number of blocks in the filesystem
