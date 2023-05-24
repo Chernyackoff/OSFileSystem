@@ -1,4 +1,5 @@
 #include "filesystem.c"
+#include "interface.c"
 
 // Function to perform filesystem operations
 void use_fs() {
@@ -22,7 +23,9 @@ void use_fs() {
 
 int main() {
     make_fs();
-    use_fs();
-
+    //use_fs();
+    while (1) {
+        execute_command();
+    }
     return 0;
 }
