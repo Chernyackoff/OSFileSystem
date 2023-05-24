@@ -69,6 +69,15 @@ void write_inode(int inode_number, struct inode* inode) {
 
 // Function to create the filesystem
 void make_fs() {
+    if (access("filesystem", F_OK) == -1) {
+        FILE* filesystem_file = fopen("filesystem", "wb");
+        if (filesystem_file == NULL) {
+            printf("Failed to create the filesystem file.\n");
+            exit(1);
+        }
+        fclose(filesystem_file);
+    }
+
     struct superblock sb;
     sb.s_inodes_count = MAX_INODES;
     sb.s_blocks_count = MAX_BLOCKS;
@@ -109,7 +118,7 @@ int create_inode() {
     }
 
     if (inode_number == superblock.s_inodes_count) {
-        return 0;
+        return -1;
     }
 
     // Mark the inode as used in the bitmap
