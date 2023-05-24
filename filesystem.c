@@ -1,6 +1,12 @@
 #include "filesystem.h"
 
-void read_block(int block_number, void* buffer, size_t size) {
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+
+int read_block(int block_number, void* buffer, size_t size) {
     FILE* file = fopen("filesystem", "rb");
     if (file == NULL) {
         printf("Failed to open file for reading.\n");
@@ -245,9 +251,12 @@ void write_file(int inode_number, const char* data, int size) {
     write_inode(inode_number, &inode);
 }
 
-void read_file(int inode_number, char* buffer, size_t buffer_size) {
+int read_file(int inode_number, char* buffer, size_t buffer_size) {
     struct inode inode;
     read_inode(inode_number, &inode);
+
+    if (!inode.i_size)
+        return -1;
 
     // Read the file data blocks
     size_t bytes_read = 0;
@@ -260,4 +269,5 @@ void read_file(int inode_number, char* buffer, size_t buffer_size) {
             break; // Buffer is full, break the loop
         }
     }
+    return 0;
 }

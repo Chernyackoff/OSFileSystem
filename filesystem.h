@@ -32,7 +32,7 @@ struct inode {
     int i_block[N_BLOCKS];     // Array of block pointers
 };
 
-void read_block(int block_number, void* buffer, size_t size);
+int read_block(int block_number, void* buffer, size_t size);
 void write_block(int block_number, void* buffer, size_t size);
 void read_inode(int inode_number, struct inode* inode);
 void write_inode(int inode_number, struct inode* inode);
@@ -41,6 +41,6 @@ int create_inode();
 void delete_inode(int inode_number);
 int allocate_block();
 void write_file(int inode_number, const char* data, int size);
-void read_file(int inode_number, char* buffer, size_t buffer_size);
+int read_file(int inode_number, char* buffer, size_t buffer_size);
 
 #endif /* FILESYSTEM_H */
