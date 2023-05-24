@@ -14,16 +14,19 @@ void read_block(int block_number, void* buffer, size_t size) {
         exit(1);
     }
 
-    if (fread(buffer, size, 1, file) != 1) {
-        printf("Failed to read the block from the file.\n");
-        fclose(file);
-        exit(1);
+    size_t total_bytes_read = fread(buffer, 1, size, file);
+    if (total_bytes_read != size) {
+        if (!feof(file)) {
+            printf("Failed to read the block from the file.\n");
+            fclose(file);
+            exit(1);
+        }
     }
 
     fclose(file);
 }
 
-void write_block(int block_number, const void* buffer, size_t size) {
+void write_block(int block_number, void* buffer, size_t size) {
     FILE* file = fopen("filesystem", "rb+");
     if (file == NULL) {
         printf("Failed to open file for writing.\n");
@@ -37,10 +40,13 @@ void write_block(int block_number, const void* buffer, size_t size) {
         exit(1);
     }
 
-    if (fwrite(buffer, size, 1, file) != 1) {
-        printf("Failed to write the block to the file.\n");
-        fclose(file);
-        exit(1);
+    size_t bytes_written = fwrite(buffer, 1, size, file);
+    if (bytes_written != size) {
+        if (!feof(file)) {
+            printf("Failed to read the block from the file.\n");
+            fclose(file);
+            exit(1);
+        }
     }
 
     fclose(file);
@@ -68,7 +74,7 @@ void make_fs() {
     sb.s_blocks_count = MAX_BLOCKS;
     sb.s_free_blocks_count = sb.s_blocks_count;
     sb.s_free_inodes_count = sb.s_inodes_count;
-    sb.s_first_data_block = 3;
+    sb.s_first_data_block = 4;
     write_block(SUPERBLOCK_NUMBER, &sb, sizeof(sb));
 
     char inode_bitmap[INODE_BITMAP_SIZE];
@@ -119,6 +125,9 @@ int create_inode() {
     memset(inode.i_block, 0, sizeof(inode.i_block));
 
     write_inode(inode_number, &inode);
+    
+    superblock.s_free_inodes_count--;
+    write_block(SUPERBLOCK_NUMBER, &superblock, sizeof(superblock));
 
     return inode_number;
 }
@@ -149,9 +158,13 @@ void delete_inode(int inode_number) {
         char byte = block_bitmap[byte_offset];
         char mask = 1 << bit_offset;
         block_bitmap[byte_offset] |= mask;
+
+        superblock.s_free_blocks_count++;
     }
 
     write_block(BLOCK_BITMAP_NUMBER, block_bitmap, sizeof(block_bitmap));
+    superblock.s_free_inodes_count++;
+    write_block(SUPERBLOCK_NUMBER, &superblock, sizeof(superblock));
 
     memset(&inode, 0, sizeof(struct inode));
     write_inode(inode_number, &inode);
@@ -160,9 +173,11 @@ void delete_inode(int inode_number) {
 int allocate_block() {
     char block_bitmap[BLOCK_BITMAP_SIZE];
     read_block(BLOCK_BITMAP_NUMBER, block_bitmap, sizeof(block_bitmap));
+    struct superblock superblock;
+    read_block(SUPERBLOCK_NUMBER, &superblock, sizeof(superblock));
 
     // Find the first free block in the bitmap
-    for (int i = 0; i < MAX_BLOCKS; i++) {
+    for (int i = superblock.s_first_data_block; i < MAX_BLOCKS; i++) {
         int byte_offset = i / 8;
         int bit_offset = i % 8;
         char byte = block_bitmap[byte_offset];
@@ -171,6 +186,9 @@ int allocate_block() {
             // Mark the block as allocated in the bitmap
             block_bitmap[byte_offset] &= ~mask;
             write_block(BLOCK_BITMAP_NUMBER, block_bitmap, sizeof(block_bitmap));
+
+            superblock.s_free_blocks_count--;
+            write_block(SUPERBLOCK_NUMBER, &superblock, sizeof(superblock));
 
             return i;
         }

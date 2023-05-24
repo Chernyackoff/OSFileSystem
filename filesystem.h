@@ -32,7 +32,7 @@ struct inode {
 };
 
 void read_block(int block_number, void* buffer, size_t size);
-void write_block(int block_number, const void* buffer, size_t size);
+void write_block(int block_number, void* buffer, size_t size);
 void read_inode(int inode_number, struct inode* inode);
 void write_inode(int inode_number, struct inode* inode);
 void make_fs();
