@@ -106,7 +106,7 @@ void make_fs() {
 }
 
 
-int create_inode() {
+int create_inode(char* name) {
     struct superblock superblock;
     read_block(SUPERBLOCK_NUMBER, &superblock, sizeof(superblock));
 
@@ -137,6 +137,7 @@ int create_inode() {
     struct inode inode;
     inode.i_size = 0;
     inode.i_blocks = 0;
+    memcpy(inode.name, name, sizeof(char) * FILENAME_MAX_LENGTH);
     memset(inode.i_block, 0, sizeof(inode.i_block));
 
     write_inode(inode_number, &inode);
@@ -270,4 +271,31 @@ int read_file(int inode_number, char* buffer, size_t buffer_size) {
         }
     }
     return 0;
+}
+
+int find_inode_by_name(char* name)
+{
+    struct inode inode;
+    for (size_t i = 0; i < MAX_INODES; i++)
+    {
+        read_inode(i, &inode);
+        if (strcmp(name, inode.name) == 0)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void delete_inode_by_name(char* name)
+{
+    int index = find_inode_by_name(name);
+    if (index == -1)
+    {
+        printf("No such inode!");
+    }
+    else
+    {
+        delete_inode(index);
+    }
 }
